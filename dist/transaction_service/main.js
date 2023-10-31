@@ -10,9 +10,9 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.bootstrap = void 0;
 const core_1 = __webpack_require__(2);
 const microservices_1 = __webpack_require__(3);
-const app_module_1 = __webpack_require__(4);
+const transaction_module_1 = __webpack_require__(4);
 async function bootstrap() {
-    const app = await core_1.NestFactory.createMicroservice(app_module_1.AppModule, {
+    const app = await core_1.NestFactory.createMicroservice(transaction_module_1.TransactionModule, {
         transport: microservices_1.Transport.RMQ,
         options: {
             urls: ['amqp://localhost:5672'],
@@ -47,18 +47,27 @@ module.exports = require("@nestjs/microservices");
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AppModule = void 0;
+exports.TransactionModule = exports.RMQ_SERVICE_NAME = void 0;
 const tslib_1 = __webpack_require__(5);
 const database_1 = __webpack_require__(6);
+const rmq_1 = __webpack_require__(18);
 const common_1 = __webpack_require__(8);
-const config_1 = __webpack_require__(9);
+const cqrs_1 = __webpack_require__(21);
 const mongoose_1 = __webpack_require__(10);
-const transaction_schema_1 = __webpack_require__(18);
-const joi_1 = tslib_1.__importDefault(__webpack_require__(19));
-const transaction_module_1 = __webpack_require__(20);
-let AppModule = exports.AppModule = class AppModule {
+const commands_1 = __webpack_require__(22);
+const transaction_entity_repository_1 = __webpack_require__(28);
+const transaction_schema_factory_1 = __webpack_require__(30);
+const transaction_schema_1 = __webpack_require__(29);
+const Transaction_factory_1 = __webpack_require__(25);
+const events_1 = __webpack_require__(35);
+const transaction_controller_1 = __webpack_require__(37);
+const transaction_service_1 = __webpack_require__(39);
+const config_1 = __webpack_require__(9);
+const joi_1 = tslib_1.__importDefault(__webpack_require__(40));
+exports.RMQ_SERVICE_NAME = "TRANSACTION";
+let TransactionModule = exports.TransactionModule = class TransactionModule {
 };
-exports.AppModule = AppModule = tslib_1.__decorate([
+exports.TransactionModule = TransactionModule = tslib_1.__decorate([
     (0, common_1.Module)({
         imports: [
             config_1.ConfigModule.forRoot({
@@ -69,14 +78,24 @@ exports.AppModule = AppModule = tslib_1.__decorate([
                     RABBIT_MQ_TRANSACTION_QUEUE: joi_1.default.string().required(),
                 }),
             }),
-            database_1.DatabaseModule,
+            cqrs_1.CqrsModule,
             mongoose_1.MongooseModule.forFeature([{ name: transaction_schema_1.Transaction.name, schema: transaction_schema_1.TransactionSchema }]),
-            transaction_module_1.TransactionModule
+            database_1.DatabaseModule,
+            rmq_1.RmqModule.register({
+                name: exports.RMQ_SERVICE_NAME,
+            }),
         ],
-        controllers: [],
-        providers: [],
+        providers: [
+            transaction_service_1.TransactionService,
+            transaction_entity_repository_1.TransactionEntityRepository,
+            transaction_schema_factory_1.TransactionSchemaFactory,
+            Transaction_factory_1.TransactionFactory,
+            ...commands_1.TransactionCommandHandlers,
+            ...events_1.TransactionEventHandlers
+        ],
+        controllers: [transaction_controller_1.TransactionController]
     })
-], AppModule);
+], TransactionModule);
 
 
 /***/ }),
@@ -178,6 +197,9 @@ class EntityRepository {
     async create(entity) {
         await new this.entityModel(this.entitySchemaFactory.create(entity)).save();
     }
+    async remove(entityId) {
+        await this.entityModel.deleteOne({ where: { _id: entityId } });
+    }
     async findOneAndReplace(entityFilterQuery, entity) {
         const updatedEntityDocument = await this.entityModel.findOneAndReplace(entityFilterQuery, (this.entitySchemaFactory.create(entity)), {
             new: true,
@@ -270,104 +292,16 @@ module.exports = require("mongodb");
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
-var _a;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.TransactionSchema = exports.Transaction = void 0;
-const tslib_1 = __webpack_require__(5);
-const mongoose_1 = __webpack_require__(10);
-const database_1 = __webpack_require__(6);
-let Transaction = exports.Transaction = class Transaction extends database_1.IdentifiableEntitySchema {
-};
-tslib_1.__decorate([
-    (0, mongoose_1.Prop)(),
-    tslib_1.__metadata("design:type", String)
-], Transaction.prototype, "investment_id", void 0);
-tslib_1.__decorate([
-    (0, mongoose_1.Prop)(),
-    tslib_1.__metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
-], Transaction.prototype, "transaction_date", void 0);
-tslib_1.__decorate([
-    (0, mongoose_1.Prop)(),
-    tslib_1.__metadata("design:type", Number)
-], Transaction.prototype, "amount", void 0);
-tslib_1.__decorate([
-    (0, mongoose_1.Prop)(),
-    tslib_1.__metadata("design:type", String)
-], Transaction.prototype, "units", void 0);
-exports.Transaction = Transaction = tslib_1.__decorate([
-    (0, mongoose_1.Schema)({ versionKey: false, collection: 'transactions' })
-], Transaction);
-exports.TransactionSchema = mongoose_1.SchemaFactory.createForClass(Transaction);
-
-
-/***/ }),
-/* 19 */
-/***/ ((module) => {
-
-module.exports = require("joi");
-
-/***/ }),
-/* 20 */
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.TransactionModule = exports.RMQ_SERVICE_NAME = void 0;
-const tslib_1 = __webpack_require__(5);
-const database_1 = __webpack_require__(6);
-const rmq_1 = __webpack_require__(21);
-const common_1 = __webpack_require__(8);
-const cqrs_1 = __webpack_require__(24);
-const mongoose_1 = __webpack_require__(10);
-const commands_1 = __webpack_require__(25);
-const transaction_entity_repository_1 = __webpack_require__(31);
-const transaction_schema_factory_1 = __webpack_require__(32);
-const transaction_schema_1 = __webpack_require__(18);
-const Transaction_factory_1 = __webpack_require__(28);
-const events_1 = __webpack_require__(35);
-const transaction_controller_1 = __webpack_require__(37);
-const transaction_service_1 = __webpack_require__(39);
-exports.RMQ_SERVICE_NAME = "TRANSACTION";
-let TransactionModule = exports.TransactionModule = class TransactionModule {
-};
-exports.TransactionModule = TransactionModule = tslib_1.__decorate([
-    (0, common_1.Module)({
-        imports: [
-            cqrs_1.CqrsModule,
-            mongoose_1.MongooseModule.forFeature([{ name: transaction_schema_1.Transaction.name, schema: transaction_schema_1.TransactionSchema }]),
-            database_1.DatabaseModule,
-            rmq_1.RmqModule.register({
-                name: exports.RMQ_SERVICE_NAME,
-            }),
-        ],
-        providers: [
-            transaction_service_1.TransactionService,
-            transaction_entity_repository_1.TransactionEntityRepository,
-            transaction_schema_factory_1.TransactionSchemaFactory,
-            Transaction_factory_1.TransactionFactory,
-            ...commands_1.TransactionCommandHandlers,
-            ...events_1.TransactionEventHandlers
-        ],
-        controllers: [transaction_controller_1.TransactionController]
-    })
-], TransactionModule);
-
-
-/***/ }),
-/* 21 */
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.RmqService = exports.RmqModule = void 0;
-var rmq_module_1 = __webpack_require__(22);
+var rmq_module_1 = __webpack_require__(19);
 Object.defineProperty(exports, "RmqModule", ({ enumerable: true, get: function () { return rmq_module_1.RmqModule; } }));
-var rmq_service_1 = __webpack_require__(23);
+var rmq_service_1 = __webpack_require__(20);
 Object.defineProperty(exports, "RmqService", ({ enumerable: true, get: function () { return rmq_service_1.RmqService; } }));
 
 
 /***/ }),
-/* 22 */
+/* 19 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
@@ -378,27 +312,24 @@ const tslib_1 = __webpack_require__(5);
 const common_1 = __webpack_require__(8);
 const config_1 = __webpack_require__(9);
 const microservices_1 = __webpack_require__(3);
-const rmq_service_1 = __webpack_require__(23);
+const rmq_service_1 = __webpack_require__(20);
 let RmqModule = exports.RmqModule = RmqModule_1 = class RmqModule {
     static register({ name }) {
         return {
             module: RmqModule_1,
-            imports: [
-                microservices_1.ClientsModule.registerAsync([
-                    {
-                        name,
-                        useFactory: (configService) => ({
+            exports: [{
+                    provide: name,
+                    useFactory: (configService) => {
+                        return microservices_1.ClientProxyFactory.create({
                             transport: microservices_1.Transport.RMQ,
                             options: {
-                                urls: [configService.getOrThrow('RABBIT_MQ_URI')],
+                                urls: [configService.get('RABBIT_MQ_URI')],
                                 queue: configService.get(`RABBIT_MQ_${name}_QUEUE`),
-                            },
-                        }),
-                        inject: [config_1.ConfigService],
+                            }
+                        });
                     },
-                ]),
-            ],
-            exports: [microservices_1.ClientsModule],
+                    inject: [config_1.ConfigService],
+                }],
         };
     }
 };
@@ -411,7 +342,7 @@ exports.RmqModule = RmqModule = RmqModule_1 = tslib_1.__decorate([
 
 
 /***/ }),
-/* 23 */
+/* 20 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
@@ -450,25 +381,26 @@ exports.RmqService = RmqService = tslib_1.__decorate([
 
 
 /***/ }),
-/* 24 */
+/* 21 */
 /***/ ((module) => {
 
 module.exports = require("@nestjs/cqrs");
 
 /***/ }),
-/* 25 */
+/* 22 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.TransactionCommandHandlers = void 0;
-const buyAsset_handler_1 = __webpack_require__(26);
+const buyAsset_handler_1 = __webpack_require__(23);
+const failTransactionCreation_handler_1 = __webpack_require__(31);
 const successTransactionCreation_handler_1 = __webpack_require__(33);
-exports.TransactionCommandHandlers = [buyAsset_handler_1.BuyAssetHander, successTransactionCreation_handler_1.SuccessTransactionCreationHandler];
+exports.TransactionCommandHandlers = [buyAsset_handler_1.BuyAssetHander, successTransactionCreation_handler_1.SuccessTransactionCreationHandler, failTransactionCreation_handler_1.FailTransactionCreationHandler];
 
 
 /***/ }),
-/* 26 */
+/* 23 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
@@ -476,17 +408,17 @@ var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BuyAssetHander = void 0;
 const tslib_1 = __webpack_require__(5);
-const cqrs_1 = __webpack_require__(24);
-const buyAsset_command_1 = __webpack_require__(27);
-const Transaction_factory_1 = __webpack_require__(28);
+const cqrs_1 = __webpack_require__(21);
+const buyAsset_command_1 = __webpack_require__(24);
+const Transaction_factory_1 = __webpack_require__(25);
 let BuyAssetHander = exports.BuyAssetHander = class BuyAssetHander {
     constructor(transactionFactory, eventPublisher) {
         this.transactionFactory = transactionFactory;
         this.eventPublisher = eventPublisher;
     }
     async execute({ buyAssetRequest }) {
-        const { investment_id, transaction_date, amount, units } = buyAssetRequest;
-        const transaction = this.eventPublisher.mergeObjectContext(await this.transactionFactory.create(investment_id, transaction_date, amount, units));
+        const { investmentId, transactionDate, amount, units } = buyAssetRequest;
+        const transaction = this.eventPublisher.mergeObjectContext(await this.transactionFactory.create(investmentId, transactionDate, amount, units));
         transaction.commit();
     }
 };
@@ -497,7 +429,7 @@ exports.BuyAssetHander = BuyAssetHander = tslib_1.__decorate([
 
 
 /***/ }),
-/* 27 */
+/* 24 */
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -512,7 +444,7 @@ exports.BuyAssetCommand = BuyAssetCommand;
 
 
 /***/ }),
-/* 28 */
+/* 25 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
@@ -521,16 +453,16 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.TransactionFactory = void 0;
 const tslib_1 = __webpack_require__(5);
 const common_1 = __webpack_require__(8);
-const Transaction_model_1 = __webpack_require__(29);
+const Transaction_model_1 = __webpack_require__(26);
 const mongodb_1 = __webpack_require__(17);
-const assetBought_event_1 = __webpack_require__(30);
-const transaction_entity_repository_1 = __webpack_require__(31);
+const assetBought_event_1 = __webpack_require__(27);
+const transaction_entity_repository_1 = __webpack_require__(28);
 let TransactionFactory = exports.TransactionFactory = class TransactionFactory {
     constructor(repository) {
         this.repository = repository;
     }
-    async create(investment_id, transaction_date, amount, units) {
-        const transaction = new Transaction_model_1.TransactionDomainModel(new mongodb_1.ObjectId().toHexString(), investment_id, new Date(transaction_date), amount, units);
+    async create(investmentId, transactionDate, amount, units) {
+        const transaction = new Transaction_model_1.TransactionDomainModel(new mongodb_1.ObjectId().toHexString(), investmentId, new Date(transactionDate), amount, units);
         await this.repository.create(transaction);
         transaction.apply(new assetBought_event_1.AssetBoughtEvent(transaction));
         return transaction;
@@ -543,19 +475,19 @@ exports.TransactionFactory = TransactionFactory = tslib_1.__decorate([
 
 
 /***/ }),
-/* 29 */
+/* 26 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.TransactionDomainModel = void 0;
-const cqrs_1 = __webpack_require__(24);
+const cqrs_1 = __webpack_require__(21);
 class TransactionDomainModel extends cqrs_1.AggregateRoot {
-    constructor(_id, investment_id, transaction_date, amount, units) {
+    constructor(_id, investmentId, transactionDate, amount, units) {
         super();
         this._id = _id;
-        this.investment_id = investment_id;
-        this.transaction_date = transaction_date;
+        this.investmentId = investmentId;
+        this.transactionDate = transactionDate;
         this.amount = amount;
         this.units = units;
     }
@@ -563,10 +495,10 @@ class TransactionDomainModel extends cqrs_1.AggregateRoot {
         return this._id;
     }
     getInvestmentId() {
-        return this.investment_id;
+        return this.investmentId;
     }
     getTransactionDate() {
-        return this.transaction_date;
+        return this.transactionDate;
     }
     getAmount() {
         return this.amount;
@@ -579,7 +511,7 @@ exports.TransactionDomainModel = TransactionDomainModel;
 
 
 /***/ }),
-/* 30 */
+/* 27 */
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -594,7 +526,7 @@ exports.AssetBoughtEvent = AssetBoughtEvent;
 
 
 /***/ }),
-/* 31 */
+/* 28 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
@@ -604,9 +536,9 @@ exports.TransactionEntityRepository = void 0;
 const tslib_1 = __webpack_require__(5);
 const common_1 = __webpack_require__(8);
 const database_1 = __webpack_require__(6);
-const transaction_schema_1 = __webpack_require__(18);
+const transaction_schema_1 = __webpack_require__(29);
 const mongoose_1 = __webpack_require__(10);
-const transaction_schema_factory_1 = __webpack_require__(32);
+const transaction_schema_factory_1 = __webpack_require__(30);
 const mongoose_2 = __webpack_require__(14);
 let TransactionEntityRepository = exports.TransactionEntityRepository = class TransactionEntityRepository extends database_1.BaseEntityRepository {
     constructor(transactionModel, transactionSchemaFactory) {
@@ -621,33 +553,113 @@ exports.TransactionEntityRepository = TransactionEntityRepository = tslib_1.__de
 
 
 /***/ }),
-/* 32 */
+/* 29 */
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.TransactionSchema = exports.Transaction = void 0;
+const tslib_1 = __webpack_require__(5);
+const mongoose_1 = __webpack_require__(10);
+const database_1 = __webpack_require__(6);
+let Transaction = exports.Transaction = class Transaction extends database_1.IdentifiableEntitySchema {
+};
+tslib_1.__decorate([
+    (0, mongoose_1.Prop)(),
+    tslib_1.__metadata("design:type", String)
+], Transaction.prototype, "investmentId", void 0);
+tslib_1.__decorate([
+    (0, mongoose_1.Prop)(),
+    tslib_1.__metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
+], Transaction.prototype, "transactionDate", void 0);
+tslib_1.__decorate([
+    (0, mongoose_1.Prop)(),
+    tslib_1.__metadata("design:type", Number)
+], Transaction.prototype, "amount", void 0);
+tslib_1.__decorate([
+    (0, mongoose_1.Prop)(),
+    tslib_1.__metadata("design:type", String)
+], Transaction.prototype, "units", void 0);
+exports.Transaction = Transaction = tslib_1.__decorate([
+    (0, mongoose_1.Schema)({ versionKey: false, collection: 'transactions' })
+], Transaction);
+exports.TransactionSchema = mongoose_1.SchemaFactory.createForClass(Transaction);
+
+
+/***/ }),
+/* 30 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.TransactionSchemaFactory = void 0;
 const tslib_1 = __webpack_require__(5);
-const Transaction_model_1 = __webpack_require__(29);
+const Transaction_model_1 = __webpack_require__(26);
 const common_1 = __webpack_require__(8);
 const mongodb_1 = __webpack_require__(17);
 let TransactionSchemaFactory = exports.TransactionSchemaFactory = class TransactionSchemaFactory {
     create(entity) {
         return {
             _id: new mongodb_1.ObjectId(entity.getId()),
-            investment_id: entity.getInvestmentId(),
-            transaction_date: entity.getTransactionDate(),
+            investmentId: entity.getInvestmentId(),
+            transactionDate: entity.getTransactionDate(),
             amount: entity.getAmount(),
             units: entity.getUnits(),
         };
     }
     createFromSchema(entitySchema) {
-        return new Transaction_model_1.TransactionDomainModel(entitySchema._id.toHexString(), entitySchema.investment_id, entitySchema.transaction_date, entitySchema.amount, entitySchema.units);
+        return new Transaction_model_1.TransactionDomainModel(entitySchema._id.toHexString(), entitySchema.investmentId, entitySchema.transactionDate, entitySchema.amount, entitySchema.units);
     }
 };
 exports.TransactionSchemaFactory = TransactionSchemaFactory = tslib_1.__decorate([
     (0, common_1.Injectable)()
 ], TransactionSchemaFactory);
+
+
+/***/ }),
+/* 31 */
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.FailTransactionCreationHandler = void 0;
+const tslib_1 = __webpack_require__(5);
+const common_1 = __webpack_require__(8);
+const cqrs_1 = __webpack_require__(21);
+const microservices_1 = __webpack_require__(3);
+const transaction_module_1 = __webpack_require__(4);
+const failTransactionCreation_command_1 = __webpack_require__(32);
+let FailTransactionCreationHandler = exports.FailTransactionCreationHandler = class FailTransactionCreationHandler {
+    constructor(client) {
+        this.client = client;
+        this.client.connect();
+    }
+    async handle({ exception }) {
+        this.client.send("fail.transaction.creation", JSON.stringify(exception));
+    }
+};
+exports.FailTransactionCreationHandler = FailTransactionCreationHandler = tslib_1.__decorate([
+    (0, cqrs_1.CommandHandler)(failTransactionCreation_command_1.FailTransactionCreationCommand),
+    tslib_1.__param(0, (0, common_1.Inject)(transaction_module_1.RMQ_SERVICE_NAME)),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _a : Object])
+], FailTransactionCreationHandler);
+
+
+/***/ }),
+/* 32 */
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.FailTransactionCreationCommand = void 0;
+class FailTransactionCreationCommand {
+    constructor(exception) {
+        this.exception = exception;
+    }
+}
+exports.FailTransactionCreationCommand = FailTransactionCreationCommand;
 
 
 /***/ }),
@@ -660,10 +672,10 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SuccessTransactionCreationHandler = void 0;
 const tslib_1 = __webpack_require__(5);
 const common_1 = __webpack_require__(8);
-const cqrs_1 = __webpack_require__(24);
+const cqrs_1 = __webpack_require__(21);
 const microservices_1 = __webpack_require__(3);
 const successTransactionCreation_command_1 = __webpack_require__(34);
-const transaction_module_1 = __webpack_require__(20);
+const transaction_module_1 = __webpack_require__(4);
 let SuccessTransactionCreationHandler = exports.SuccessTransactionCreationHandler = class SuccessTransactionCreationHandler {
     constructor(client) {
         this.client = client;
@@ -714,8 +726,8 @@ exports.TransactionEventHandlers = [assetBought_handler_1.AssetBoughtHandler];
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AssetBoughtHandler = void 0;
 const tslib_1 = __webpack_require__(5);
-const cqrs_1 = __webpack_require__(24);
-const assetBought_event_1 = __webpack_require__(30);
+const cqrs_1 = __webpack_require__(21);
+const assetBought_event_1 = __webpack_require__(27);
 let AssetBoughtHandler = exports.AssetBoughtHandler = class AssetBoughtHandler {
     async handle({ transaction }) {
         console.log(`Transaction ${transaction.getId()} was created.`);
@@ -736,16 +748,22 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.TransactionController = void 0;
 const tslib_1 = __webpack_require__(5);
 const common_1 = __webpack_require__(8);
-const cqrs_1 = __webpack_require__(24);
+const cqrs_1 = __webpack_require__(21);
 const microservices_1 = __webpack_require__(3);
-const buyAsset_command_1 = __webpack_require__(27);
+const buyAsset_command_1 = __webpack_require__(24);
 const buyAssetRequest_dto_1 = __webpack_require__(38);
+const failTransactionCreation_command_1 = __webpack_require__(32);
 let TransactionController = exports.TransactionController = class TransactionController {
     constructor(commandBus) {
         this.commandBus = commandBus;
     }
     async createTransaction(data, context) {
-        await this.commandBus.execute(new buyAsset_command_1.BuyAssetCommand(data));
+        try {
+            await this.commandBus.execute(new buyAsset_command_1.BuyAssetCommand(data));
+        }
+        catch (e) {
+            await this.commandBus.execute(new failTransactionCreation_command_1.FailTransactionCreationCommand(e));
+        }
     }
 };
 tslib_1.__decorate([
@@ -797,8 +815,8 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.TransactionService = void 0;
 const tslib_1 = __webpack_require__(5);
 const common_1 = __webpack_require__(8);
-const cqrs_1 = __webpack_require__(24);
-const buyAsset_command_1 = __webpack_require__(27);
+const cqrs_1 = __webpack_require__(21);
+const buyAsset_command_1 = __webpack_require__(24);
 let TransactionService = exports.TransactionService = class TransactionService {
     constructor(commandBus) {
         this.commandBus = commandBus;
@@ -812,6 +830,12 @@ exports.TransactionService = TransactionService = tslib_1.__decorate([
     tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof cqrs_1.CommandBus !== "undefined" && cqrs_1.CommandBus) === "function" ? _a : Object])
 ], TransactionService);
 
+
+/***/ }),
+/* 40 */
+/***/ ((module) => {
+
+module.exports = require("joi");
 
 /***/ })
 /******/ 	]);

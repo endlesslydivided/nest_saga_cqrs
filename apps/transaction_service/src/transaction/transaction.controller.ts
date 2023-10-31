@@ -3,6 +3,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { Ctx, EventPattern, MessagePattern, Payload, RmqContext } from '@nestjs/microservices';
 import { BuyAssetCommand } from './commands/buyAsset.command';
 import { BuyAsssetRequest } from './dto/request/buyAssetRequest.dto';
+import { FailTransactionCreationCommand } from './commands/failTransactionCreation.command';
 
 @Controller()
 export class TransactionController {
@@ -11,7 +12,14 @@ export class TransactionController {
 
     @MessagePattern("investment.created")
     async createTransaction(@Payload() data: BuyAsssetRequest, @Ctx() context: RmqContext) {
-        await this.commandBus.execute<BuyAssetCommand,void>(new BuyAssetCommand(data))
+        try
+        {
+            await this.commandBus.execute<BuyAssetCommand,void>(new BuyAssetCommand(data))
+        }
+        catch(e)
+        {
+            await this.commandBus.execute<FailTransactionCreationCommand,void>(new FailTransactionCreationCommand(e))
+        }
     }
 }
 

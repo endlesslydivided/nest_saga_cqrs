@@ -49,6 +49,11 @@ export abstract class EntityRepository<
     await new this.entityModel(this.entitySchemaFactory.create(entity)).save();
   }
 
+  async remove(entityId: string): Promise<void> {
+    await this.entityModel.deleteOne({where:{_id:entityId}});
+  }
+
+
   protected async findOneAndReplace(
     entityFilterQuery: FilterQuery<TSchema>,
     entity: TEntity,

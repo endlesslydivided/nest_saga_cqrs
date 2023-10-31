@@ -1,9 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { AppModule } from './app/app.module';
+import { TransactionModule } from './transaction/transaction.module';
 
 export async function bootstrap() {
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
+  const app = await NestFactory.createMicroservice<MicroserviceOptions>(TransactionModule, {
     transport: Transport.RMQ,
     options: {
       urls: ['amqp://localhost:5672'],
@@ -14,7 +14,6 @@ export async function bootstrap() {
       },
     },
   });
-  const globalPrefix = 'api';
   await app.listen();
 
 }

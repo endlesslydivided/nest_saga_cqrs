@@ -11,14 +11,15 @@ export class TransactionFactory implements EntityFactory<TransactionDomainModel>
     constructor(private repository: TransactionEntityRepository){}
 
     async create(  
-        investment_id:string,
-        transaction_date:string,
+        investmentId:string,
+        transactionDate:string,
         amount:number,
         units:string): Promise<TransactionDomainModel> {
+
         const transaction = new TransactionDomainModel(
             new ObjectId().toHexString(),
-            investment_id,
-            new Date(transaction_date),
+            investmentId,
+            new Date(transactionDate),
             amount,
             units
         );
