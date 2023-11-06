@@ -88,7 +88,8 @@ module.exports = require("@nestjs/common");
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
-var _a, _b, _c, _d, _e, _f, _g;
+var InvestmentController_1;
+var _a, _b, _c, _d, _e, _f, _g, _h;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.InvestmentController = void 0;
 const tslib_1 = __webpack_require__(4);
@@ -99,20 +100,25 @@ const createInvestmentRequest_dto_1 = __webpack_require__(8);
 const createInvestment_command_1 = __webpack_require__(9);
 const failedTransactionCreation_command_1 = __webpack_require__(10);
 const failedTransactionCreation_dto_1 = __webpack_require__(11);
-const successTransactionCreation_command_1 = __webpack_require__(12);
 const successTransactionCreation_dto_1 = __webpack_require__(13);
-let InvestmentController = exports.InvestmentController = class InvestmentController {
+let InvestmentController = exports.InvestmentController = InvestmentController_1 = class InvestmentController {
     constructor(commandBus) {
         this.commandBus = commandBus;
+        this.logger = new common_1.Logger(InvestmentController_1.name);
     }
     async createInvestment(data, context) {
+        this.logger.debug(`Message (investment.creation): ${JSON.stringify(data)}`);
         await this.commandBus.execute(new createInvestment_command_1.CreateInvestmentCommand(data));
     }
+    async failInvestment(data, context) {
+        this.logger.error(`Message(fail.investment.creation): ${JSON.stringify(data)}`);
+    }
     async processFailedTransactionCreation(data, context) {
+        this.logger.debug(`Message (fail.transaction.creation): ${JSON.stringify(data)}`);
         await this.commandBus.execute(new failedTransactionCreation_command_1.FailedTransactionCreationCommand(data));
     }
     async processSuccessTransactionCreation(data, context) {
-        await this.commandBus.execute(new successTransactionCreation_command_1.SuccessTransactionCreationCommand(data));
+        this.logger.debug(`Message (success.transaction.creation): ${JSON.stringify(data, null, 2)}`);
     }
 };
 tslib_1.__decorate([
@@ -124,11 +130,19 @@ tslib_1.__decorate([
     tslib_1.__metadata("design:returntype", Promise)
 ], InvestmentController.prototype, "createInvestment", null);
 tslib_1.__decorate([
+    (0, microservices_1.MessagePattern)("fail.investment.creation"),
+    tslib_1.__param(0, (0, microservices_1.Payload)()),
+    tslib_1.__param(1, (0, microservices_1.Ctx)()),
+    tslib_1.__metadata("design:type", Function),
+    tslib_1.__metadata("design:paramtypes", [Object, typeof (_d = typeof microservices_1.RmqContext !== "undefined" && microservices_1.RmqContext) === "function" ? _d : Object]),
+    tslib_1.__metadata("design:returntype", Promise)
+], InvestmentController.prototype, "failInvestment", null);
+tslib_1.__decorate([
     (0, microservices_1.MessagePattern)("fail.transaction.creation"),
     tslib_1.__param(0, (0, microservices_1.Payload)()),
     tslib_1.__param(1, (0, microservices_1.Ctx)()),
     tslib_1.__metadata("design:type", Function),
-    tslib_1.__metadata("design:paramtypes", [typeof (_d = typeof failedTransactionCreation_dto_1.FailedTransactionCreationDto !== "undefined" && failedTransactionCreation_dto_1.FailedTransactionCreationDto) === "function" ? _d : Object, typeof (_e = typeof microservices_1.RmqContext !== "undefined" && microservices_1.RmqContext) === "function" ? _e : Object]),
+    tslib_1.__metadata("design:paramtypes", [typeof (_e = typeof failedTransactionCreation_dto_1.FailedTransactionCreationDto !== "undefined" && failedTransactionCreation_dto_1.FailedTransactionCreationDto) === "function" ? _e : Object, typeof (_f = typeof microservices_1.RmqContext !== "undefined" && microservices_1.RmqContext) === "function" ? _f : Object]),
     tslib_1.__metadata("design:returntype", Promise)
 ], InvestmentController.prototype, "processFailedTransactionCreation", null);
 tslib_1.__decorate([
@@ -136,13 +150,30 @@ tslib_1.__decorate([
     tslib_1.__param(0, (0, microservices_1.Payload)()),
     tslib_1.__param(1, (0, microservices_1.Ctx)()),
     tslib_1.__metadata("design:type", Function),
-    tslib_1.__metadata("design:paramtypes", [typeof (_f = typeof successTransactionCreation_dto_1.SuccessTransactionCreationDto !== "undefined" && successTransactionCreation_dto_1.SuccessTransactionCreationDto) === "function" ? _f : Object, typeof (_g = typeof microservices_1.RmqContext !== "undefined" && microservices_1.RmqContext) === "function" ? _g : Object]),
+    tslib_1.__metadata("design:paramtypes", [typeof (_g = typeof successTransactionCreation_dto_1.SuccessTransactionCreationDto !== "undefined" && successTransactionCreation_dto_1.SuccessTransactionCreationDto) === "function" ? _g : Object, typeof (_h = typeof microservices_1.RmqContext !== "undefined" && microservices_1.RmqContext) === "function" ? _h : Object]),
     tslib_1.__metadata("design:returntype", Promise)
 ], InvestmentController.prototype, "processSuccessTransactionCreation", null);
-exports.InvestmentController = InvestmentController = tslib_1.__decorate([
+exports.InvestmentController = InvestmentController = InvestmentController_1 = tslib_1.__decorate([
     (0, common_1.Controller)(),
     tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof cqrs_1.CommandBus !== "undefined" && cqrs_1.CommandBus) === "function" ? _a : Object])
 ], InvestmentController);
+/*
+Message example:
+{
+    "pattern": "investment.creation",
+    "data":
+     {
+        "name": "Heyo!",
+        "description": "Bla bla bla",
+        "startDate":"2023-05-12",
+        "endDate":"2023-05-18",
+        "initialAmount":123,
+        "currentValue":123,
+        "amount":"123",
+        "units":"oil"
+     }
+}
+*/ 
 
 
 /***/ }),
@@ -206,21 +237,7 @@ exports.FailedTransactionCreationDto = FailedTransactionCreationDto;
 
 
 /***/ }),
-/* 12 */
-/***/ ((__unused_webpack_module, exports) => {
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SuccessTransactionCreationCommand = void 0;
-class SuccessTransactionCreationCommand {
-    constructor(data) {
-        this.data = data;
-    }
-}
-exports.SuccessTransactionCreationCommand = SuccessTransactionCreationCommand;
-
-
-/***/ }),
+/* 12 */,
 /* 13 */
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -487,13 +504,20 @@ let RmqModule = exports.RmqModule = RmqModule_1 = class RmqModule {
                     clients: [
                         {
                             name,
-                            useFactory: (configService) => ({
-                                transport: microservices_1.Transport.RMQ,
-                                options: {
-                                    urls: [configService.getOrThrow('RABBIT_MQ_URI')],
-                                    queue: configService.get(`RABBIT_MQ_${name}_QUEUE`),
-                                },
-                            }),
+                            useFactory: (configService) => {
+                                const url = configService.get('RABBIT_MQ_URI') || '';
+                                const queue = configService.get(`RABBIT_MQ_${name}_QUEUE`);
+                                console.log('RabbitMQ module initiated');
+                                console.log(url);
+                                console.log(`${`RABBIT_MQ_${name}_QUEUE`}:${queue}`);
+                                return {
+                                    transport: microservices_1.Transport.RMQ,
+                                    options: {
+                                        urls: [url],
+                                        queue
+                                    },
+                                };
+                            },
                             inject: [config_1.ConfigService],
                         },
                     ],
@@ -661,7 +685,8 @@ exports.InvestmentEntityRepository = InvestmentEntityRepository = tslib_1.__deco
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.InvestmentCommandHandlers = void 0;
 const createInvestment_handler_1 = __webpack_require__(33);
-exports.InvestmentCommandHandlers = [createInvestment_handler_1.CreateInvestmentHandler];
+const failedTransactionCreation_handler_1 = __webpack_require__(43);
+exports.InvestmentCommandHandlers = [createInvestment_handler_1.CreateInvestmentHandler, failedTransactionCreation_handler_1.FailedTransactionCreationHandler];
 
 
 /***/ }),
@@ -676,14 +701,21 @@ const tslib_1 = __webpack_require__(4);
 const cqrs_1 = __webpack_require__(7);
 const createInvestment_command_1 = __webpack_require__(9);
 const Investment_factory_1 = __webpack_require__(34);
+const investmentCreated_event_1 = __webpack_require__(35);
 let CreateInvestmentHandler = exports.CreateInvestmentHandler = class CreateInvestmentHandler {
     constructor(investmentFactory, eventPublisher) {
         this.investmentFactory = investmentFactory;
         this.eventPublisher = eventPublisher;
     }
     async execute({ createInvestmentRequest }) {
-        const { name, description, startDate, endDate, initialAmount, currentValue } = createInvestmentRequest;
+        const { name, description, startDate, endDate, initialAmount, currentValue, units, amount } = createInvestmentRequest;
         const investment = this.eventPublisher.mergeObjectContext(await this.investmentFactory.create(name, description, startDate, endDate, initialAmount, currentValue));
+        investment.apply(new investmentCreated_event_1.InvestmentCreatedEvent({
+            investmentId: investment.getId(),
+            amount,
+            units,
+            transactionDate: startDate
+        }));
         investment.commit();
     }
 };
@@ -706,7 +738,6 @@ const common_1 = __webpack_require__(5);
 const mongodb_1 = __webpack_require__(25);
 const Investment_model_1 = __webpack_require__(30);
 const investment_entity_repository_1 = __webpack_require__(31);
-const investmentCreated_event_1 = __webpack_require__(35);
 let InvestmentFactory = exports.InvestmentFactory = class InvestmentFactory {
     constructor(repository) {
         this.repository = repository;
@@ -714,7 +745,6 @@ let InvestmentFactory = exports.InvestmentFactory = class InvestmentFactory {
     async create(name, description, startDate, endDate, initialAmount, currentValue) {
         const investment = new Investment_model_1.InvestmentDomainModel(new mongodb_1.ObjectId().toHexString(), name, description, new Date(startDate), new Date(endDate), initialAmount, currentValue);
         await this.repository.create(investment);
-        investment.apply(new investmentCreated_event_1.InvestmentCreatedEvent(investment));
         return investment;
     }
     async remove(investmentId) {
@@ -735,8 +765,8 @@ exports.InvestmentFactory = InvestmentFactory = tslib_1.__decorate([
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.InvestmentCreatedEvent = void 0;
 class InvestmentCreatedEvent {
-    constructor(investmentId) {
-        this.investmentId = investmentId;
+    constructor(dto) {
+        this.dto = dto;
     }
 }
 exports.InvestmentCreatedEvent = InvestmentCreatedEvent;
@@ -775,10 +805,10 @@ let FailedTransactionsInvestmentDeletedHandler = exports.FailedTransactionsInves
     }
     async handle({ exception, investmentId }) {
         console.log(`Investment wasn't created. Reason:${JSON.stringify(exception)}`);
-        this.client.send("fail.investment.creation", JSON.stringify({
+        this.client.send("fail.investment.creation", {
             exception,
             investmentId
-        }));
+        });
     }
 };
 exports.FailedTransactionsInvestmentDeletedHandler = FailedTransactionsInvestmentDeletedHandler = tslib_1.__decorate([
@@ -834,9 +864,9 @@ let InvestmentCreatedHandler = exports.InvestmentCreatedHandler = class Investme
         this.client = client;
         this.client.connect();
     }
-    async handle({ investmentId }) {
-        console.log(`Investment ${investmentId.getId()} was created.`);
-        this.client.send("investment.created", JSON.stringify(investmentId));
+    async handle(event) {
+        console.log(`Investment ${event.dto.investmentId} was created.`);
+        this.client.send('investment.created', event.dto).subscribe();
     }
 };
 exports.InvestmentCreatedHandler = InvestmentCreatedHandler = tslib_1.__decorate([
@@ -863,12 +893,42 @@ const tslib_1 = __webpack_require__(4);
 const common_1 = __webpack_require__(5);
 let AllExceptionsFilter = exports.AllExceptionsFilter = class AllExceptionsFilter {
     catch(exception, host) {
-        console.log(exception);
+        console.log(JSON.stringify(exception));
     }
 };
 exports.AllExceptionsFilter = AllExceptionsFilter = tslib_1.__decorate([
     (0, common_1.Catch)()
 ], AllExceptionsFilter);
+
+
+/***/ }),
+/* 43 */
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.FailedTransactionCreationHandler = void 0;
+const tslib_1 = __webpack_require__(4);
+const cqrs_1 = __webpack_require__(7);
+const Investment_factory_1 = __webpack_require__(34);
+const failedTransactionCreation_command_1 = __webpack_require__(10);
+const failedTransactionsInvestmentDeleted_event_1 = __webpack_require__(38);
+let FailedTransactionCreationHandler = exports.FailedTransactionCreationHandler = class FailedTransactionCreationHandler {
+    constructor(investmentFactory, eventBus) {
+        this.investmentFactory = investmentFactory;
+        this.eventBus = eventBus;
+    }
+    async execute({ data }) {
+        const { exception, investmentId } = data;
+        await this.investmentFactory.remove(investmentId);
+        this.eventBus.publish(new failedTransactionsInvestmentDeleted_event_1.FailedTransactionsInvestmentDeletedEvent(exception, investmentId));
+    }
+};
+exports.FailedTransactionCreationHandler = FailedTransactionCreationHandler = tslib_1.__decorate([
+    (0, cqrs_1.CommandHandler)(failedTransactionCreation_command_1.FailedTransactionCreationCommand),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof Investment_factory_1.InvestmentFactory !== "undefined" && Investment_factory_1.InvestmentFactory) === "function" ? _a : Object, typeof (_b = typeof cqrs_1.EventBus !== "undefined" && cqrs_1.EventBus) === "function" ? _b : Object])
+], FailedTransactionCreationHandler);
 
 
 /***/ })
@@ -918,9 +978,9 @@ async function bootstrap() {
         transport: microservices_1.Transport.RMQ,
         options: {
             urls: ['amqp://localhost:5672'],
-            queue: 'investment_queue',
+            queue: 'investment',
             queueOptions: {
-                durable: false,
+                durable: true,
                 json: true
             },
         },

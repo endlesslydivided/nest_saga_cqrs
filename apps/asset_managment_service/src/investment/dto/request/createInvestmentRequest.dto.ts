@@ -5,4 +5,6 @@ export class CreateInvestmentRequest{
     endDate:string;
     initialAmount:number;
     currentValue:number;
+    amount:number;
+    units:string;
 }

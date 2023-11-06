@@ -29,9 +29,6 @@ export class InvestmentFactory implements EntityFactory<InvestmentDomainModel>{
             currentValue,
         );
         await this.repository.create(investment);
-        investment.apply(
-            new InvestmentCreatedEvent(investment)
-        );
         return investment;
     }
 

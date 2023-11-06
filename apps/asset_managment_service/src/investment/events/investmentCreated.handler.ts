@@ -13,9 +13,9 @@ export class InvestmentCreatedHandler implements IEventHandler<InvestmentCreated
     ) {
         this.client.connect();
     }
-    async handle({investmentId}: InvestmentCreatedEvent) {
-        console.log(`Investment ${investmentId.getId()} was created.`)
-        this.client.send("investment.created",JSON.stringify(investmentId))
 
+    async handle(event: InvestmentCreatedEvent) {
+        console.log(`Investment ${event.dto.investmentId} was created.`);
+        this.client.send('investment.created',event.dto).subscribe();
     }
 }

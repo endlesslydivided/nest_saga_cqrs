@@ -14,9 +14,9 @@ export class FailedTransactionsInvestmentDeletedHandler implements IEventHandler
     }
     async handle({exception,investmentId}: FailedTransactionsInvestmentDeletedEvent) {
         console.log(`Investment wasn't created. Reason:${JSON.stringify(exception)}`)
-        this.client.send("fail.investment.creation",JSON.stringify({
+        this.client.send("fail.investment.creation",{
             exception,
             investmentId
-        }))
+        })
     }
 }

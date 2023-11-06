@@ -13,6 +13,6 @@ export class SuccessTransactionCreationHandler implements IEventHandler<SuccessT
     }
     
     async handle({transaction}: SuccessTransactionCreationCommand) {
-        this.investmentClient.send("success.transaction.creation",JSON.stringify(transaction))
+        this.investmentClient.send("success.transaction.creation",transaction).subscribe();
     }
 }

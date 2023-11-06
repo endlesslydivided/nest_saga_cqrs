@@ -1,19 +1,23 @@
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { TransactionModule } from './transaction/transaction.module';
+import { AllExceptionsFilter } from '../filters/exception.filter';
+
 
 export async function bootstrap() {
+  
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(TransactionModule, {
     transport: Transport.RMQ,
     options: {
       urls: ['amqp://localhost:5672'],
-      queue: 'transaction_queue',
+      queue: 'transaction',
       queueOptions: {
-        durable: false,
+        durable: true,
         json:true
       },
     },
   });
-  await app.listen();
 
+  app.useGlobalFilters(new AllExceptionsFilter())
+  await app.listen();
 }
