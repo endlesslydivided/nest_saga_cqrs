@@ -4,8 +4,8 @@ export class TransactionDomainModel extends AggregateRoot{
 
     constructor(
         private readonly _id:string,
-        private readonly investment_id:string,
-        private readonly transaction_date:Date,
+        private readonly investmentId:string,
+        private readonly transactionDate:Date,
         private readonly amount:number,
         private readonly units:string,
     ){
@@ -17,11 +17,11 @@ export class TransactionDomainModel extends AggregateRoot{
     }
 
     getInvestmentId(){
-        return this.investment_id;
+        return this.investmentId;
     }
 
     getTransactionDate(){
-        return this.transaction_date;
+        return this.transactionDate;
     }
 
     getAmount(){

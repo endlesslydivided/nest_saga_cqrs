@@ -5,10 +5,10 @@ import { IdentifiableEntitySchema } from "@app/libs/database";
 export class Transaction extends IdentifiableEntitySchema{
 
     @Prop()
-    investment_id: string
+    investmentId: string
 
     @Prop()
-    transaction_date: Date
+    transactionDate: Date
 
     @Prop()
     amount:number

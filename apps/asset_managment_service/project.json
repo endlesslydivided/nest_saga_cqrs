@@ -1,7 +1,7 @@
 {
   "name": "asset_managment_service",
   "$schema": "../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "asset_managment_service/src",
+  "sourceRoot": "apps/asset_managment_service/src",
   "projectType": "application",
   "targets": {
     "build": {
@@ -12,11 +12,11 @@
         "target": "node",
         "compiler": "tsc",
         "outputPath": "dist/asset_managment_service",
-        "main": "asset_managment_service/src/main.ts",
-        "tsConfig": "asset_managment_service/tsconfig.app.json",
-        "assets": ["asset_managment_service/src/assets"],
+        "main": "apps/asset_managment_service/src/main.ts",
+        "tsConfig": "apps/asset_managment_service/tsconfig.app.json",
+        "assets": ["apps/asset_managment_service/src/assets"],
         "isolatedConfig": true,
-        "webpackConfig": "asset_managment_service/webpack.config.js"
+        "webpackConfig": "apps/asset_managment_service/webpack.config.js"
       },
       "configurations": {
         "development": {},

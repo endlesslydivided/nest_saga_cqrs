@@ -10,8 +10,8 @@ export class TransactionSchemaFactory implements EntitySchemaFactory<Transaction
     create(entity: TransactionDomainModel): Transaction{
         return{
             _id: new ObjectId(entity.getId()),
-            investment_id:entity.getInvestmentId(),
-            transaction_date:entity.getTransactionDate(),
+            investmentId:entity.getInvestmentId(),
+            transactionDate:entity.getTransactionDate(),
             amount:entity.getAmount(),
             units:entity.getUnits(),
         }
@@ -20,8 +20,8 @@ export class TransactionSchemaFactory implements EntitySchemaFactory<Transaction
     createFromSchema(entitySchema: Transaction): TransactionDomainModel {
         return new TransactionDomainModel(
             entitySchema._id.toHexString(),
-            entitySchema.investment_id,
-            entitySchema.transaction_date,
+            entitySchema.investmentId,
+            entitySchema.transactionDate,
             entitySchema.amount,
             entitySchema.units
         )

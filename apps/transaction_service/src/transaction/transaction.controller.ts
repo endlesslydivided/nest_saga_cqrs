@@ -1,17 +1,27 @@
 import { Controller } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
-import { Ctx, EventPattern, MessagePattern, Payload, RmqContext } from '@nestjs/microservices';
+import { CommandBus, EventBus } from '@nestjs/cqrs';
+import { Ctx, MessagePattern, Payload, RmqContext } from '@nestjs/microservices';
 import { BuyAssetCommand } from './commands/buyAsset.command';
 import { BuyAsssetRequest } from './dto/request/buyAssetRequest.dto';
+import { FailedTransactionCreationEvent } from './events/failedTransactionCreation.event';
 
 @Controller()
 export class TransactionController {
 
-    constructor(private readonly commandBus: CommandBus){}
+    constructor(private readonly commandBus: CommandBus,
+        private readonly eventBus: EventBus
+        ){}
 
     @MessagePattern("investment.created")
     async createTransaction(@Payload() data: BuyAsssetRequest, @Ctx() context: RmqContext) {
-        await this.commandBus.execute<BuyAssetCommand,void>(new BuyAssetCommand(data))
+        try
+        {
+            await this.commandBus.execute<BuyAssetCommand,void>(new BuyAssetCommand(data))
+        }
+        catch(e)
+        {
+            this.eventBus.publish(new FailedTransactionCreationEvent(e,data.investmentId))
+        }
     }
 }
 
@@ -27,4 +37,5 @@ Message example:
       "units":"oil"
      }
 }
+
 */

@@ -10,22 +10,31 @@ import { Transaction, TransactionSchema } from './db/transaction.schema';
 import { TransactionFactory } from './domain/Transaction.factory';
 import { TransactionEventHandlers } from './events';
 import { TransactionController } from './transaction.controller';
-import { TransactionService } from './transaction.service';
+import { ConfigModule } from '@nestjs/config';
+import Joi from 'joi';
+import { RMQ_INVESTMENT_SERVICE_NAME } from './transaction.consts';
 
 
-export const RMQ_SERVICE_NAME = "TRANSACTION"
+
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: './apps/transaction_service/.env',
+      validationSchema: Joi.object({
+        RABBIT_MQ_URI: Joi.string().required(),
+        RABBIT_MQ_TRANSACTION_QUEUE: Joi.string().required(),
+      }),
+    }),
     CqrsModule,
     MongooseModule.forFeature([{ name: Transaction.name, schema: TransactionSchema }]),
     DatabaseModule, 
     RmqModule.register({
-      name: RMQ_SERVICE_NAME,
+      name: RMQ_INVESTMENT_SERVICE_NAME,
     }),
   ],
   providers: [
-    TransactionService,
     TransactionEntityRepository,
     TransactionSchemaFactory,
     TransactionFactory,

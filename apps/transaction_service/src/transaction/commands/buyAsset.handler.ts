@@ -10,10 +10,10 @@ export class BuyAssetHander implements ICommandHandler<BuyAssetCommand> {
     ) {}
 
   async execute({buyAssetRequest}: BuyAssetCommand) {
-    const { investment_id,transaction_date,amount,units } = buyAssetRequest;
+    const { investmentId,transactionDate,amount,units } = buyAssetRequest;
     const transaction = this.eventPublisher.mergeObjectContext(await this.transactionFactory.create(
-        investment_id,
-        transaction_date,
+        investmentId,
+        transactionDate,
         amount,
         units)
     );
